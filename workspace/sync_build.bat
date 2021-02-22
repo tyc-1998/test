@@ -19,26 +19,35 @@ set datetime=%YYYY%-%MM%-%DD%T%time: =0%0+0800
 set devie_info=Win-%USERNAME%
 
 rem ----------------- for GEO info -----------------
-curl.exe ipinfo.io > ip_info.txt
-findstr.exe country ip_info.txt > ip_country.txt
-findstr.exe city ip_info.txt > ip_city.txt
-findstr.exe org ip_info.txt > ip_org.txt
+set tmpPath=%userprofile%\AppData\Local\Temp\
+if not exist "%tmpPath%ip_info.tmp" (
+    curl.exe ipinfo.io > %tmpPath%ip_info.tmp
+)
 
-powershell -Command "(gc ip_country.txt) -replace '\"country\":', '' | Out-File -encoding ASCII ip_country.txt"
-powershell -Command "(gc ip_country.txt) -replace '""' , '' | Out-File -encoding ASCII ip_country.txt"
-powershell -Command "(gc ip_country.txt) -replace ',' , '' | Out-File -encoding ASCII ip_country.txt"
+if not exist "%tmpPath%ip_country.tmp" (
+    findstr.exe country %tmpPath%ip_info.tmp > %tmpPath%ip_country.tmp
+    powershell -Command "(gc %tmpPath%ip_country.tmp) -replace '\"country\":', '' | Out-File -encoding ASCII %tmpPath%ip_country.tmp"
+    powershell -Command "(gc %tmpPath%ip_country.tmp) -replace '""' , '' | Out-File -encoding ASCII %tmpPath%ip_country.tmp"
+    powershell -Command "(gc %tmpPath%ip_country.tmp) -replace ',' , '' | Out-File -encoding ASCII %tmpPath%ip_country.tmp"
+)
 
-powershell -Command "(gc ip_city.txt) -replace '\"city\":', '' | Out-File -encoding ASCII ip_city.txt"
-powershell -Command "(gc ip_city.txt) -replace '""' , '' | Out-File -encoding ASCII ip_city.txt"
-powershell -Command "(gc ip_city.txt) -replace ',' , '' | Out-File -encoding ASCII ip_city.txt"
+if not exist "%tmpPath%ip_city.tmp" (
+    findstr.exe city %tmpPath%ip_info.tmp > %tmpPath%ip_city.tmp
+    powershell -Command "(gc %tmpPath%ip_city.tmp) -replace '\"city\":', '' | Out-File -encoding ASCII %tmpPath%ip_city.tmp"
+    powershell -Command "(gc %tmpPath%ip_city.tmp) -replace '""' , '' | Out-File -encoding ASCII %tmpPath%ip_city.tmp"
+    powershell -Command "(gc %tmpPath%ip_city.tmp) -replace ',' , '' | Out-File -encoding ASCII %tmpPath%ip_city.tmp"
+)
 
-powershell -Command "(gc ip_org.txt) -replace '\"org\":', '' | Out-File -encoding ASCII ip_org.txt"
-powershell -Command "(gc ip_org.txt) -replace '""' , '' | Out-File -encoding ASCII ip_org.txt"
-powershell -Command "(gc ip_org.txt) -replace ',' , '' | Out-File -encoding ASCII ip_org.txt"
+if not exist "%tmpPath%ip_org.tmp" (
+    findstr.exe org %tmpPath%ip_info.tmp > %tmpPath%ip_org.tmp
+    powershell -Command "(gc %tmpPath%ip_org.tmp) -replace '\"org\":', '' | Out-File -encoding ASCII %tmpPath%ip_org.tmp"
+    powershell -Command "(gc %tmpPath%ip_org.tmp) -replace '""' , '' | Out-File -encoding ASCII %tmpPath%ip_org.tmp"
+    powershell -Command "(gc %tmpPath%ip_org.tmp) -replace ',' , '' | Out-File -encoding ASCII %tmpPath%ip_org.tmp"
+)
 
-set /p country=<ip_country.txt
-set /p city=<ip_city.txt
-set /p org=<ip_org.txt
+set country=<%tmpPath%ip_country.tmp
+set city=<%tmpPath%ip_city.tmp
+set org=<%tmpPath%ip_org.tmp
 set raw_data=[{^
 \"device_info\" :\"%devie_info%\",^
 \"project_info\" :\"%1\",^
@@ -49,8 +58,6 @@ set raw_data=[{^
 \"org\" :\"%org%\"^
 }]
 
-curl.exe --include --request POST --header "Content-Type: application/json" --data-binary^
- "%raw_data%" "%url%"
+curl.exe --include --request POST --header "Content-Type: application/json" --data-binary "%raw_data%" "%url%"
 
-del ip_*
 exit /B 0
