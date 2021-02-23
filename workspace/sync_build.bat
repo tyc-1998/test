@@ -45,9 +45,9 @@ if not exist "%tmpPath%ip_org.tmp" (
     powershell -Command "(gc %tmpPath%ip_org.tmp) -replace ',' , '' | Out-File -encoding ASCII %tmpPath%ip_org.tmp"
 )
 
-set country=<%tmpPath%ip_country.tmp
-set city=<%tmpPath%ip_city.tmp
-set org=<%tmpPath%ip_org.tmp
+set /p country=<%tmpPath%ip_country.tmp
+set /p city=<%tmpPath%ip_city.tmp
+set /p org=<%tmpPath%ip_org.tmp
 set raw_data=[{^
 \"device_info\" :\"%devie_info%\",^
 \"project_info\" :\"%1\",^
