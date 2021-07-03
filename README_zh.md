@@ -24,7 +24,7 @@
   | 24 MHZ | 29 KB | 9 KB |
 
 ## 跨平臺
-- 支持的操作系统：iOS/macOS/WathOS，Android，Linux（ARM/x86-64），Windows（包含VR），RTOS... 甚至**无操作系统的单片机**
+- 支持的操作系统：iOS/macOS/WatchOS，Android，Linux（ARM/x86-64），Windows（包含VR），RTOS... 甚至**无操作系统的单片机**
 - 支持的开发语言： C/C++, Swift, Java, Javascript, C#, Golang...
 - 支持的第3方库：Qt, MFC, Winforms, CoCoa...
 
@@ -170,8 +170,6 @@
 - 开发者QQ群：
 <table>
   <tr>
-    <td align="center"><a href="https://jq.qq.com/?_wv=1027&k=qfvGGAa7"><img src="documents/qq.group-1.jpg" width="240px;"/><br /><sub><b>专家群💎：527251257</b></sub></a>
-    <td align="center"><a href="https://jq.qq.com/?_wv=1027&k=yKnUJj1B"><img src="documents/qq.group-2.jpg" width="240px;"/><br /><sub><b>专家群💎：841031761</b></sub></a>
-    <td align="center"><a href="https://jq.qq.com/?_wv=1027&k=5hc3qwj"><img src="documents/qq.group-3.jpg" width="240px;"/><br /><sub><b>免费群🔑：717471210</b></sub></a>
+    <td align="center"><a href="https://jq.qq.com/?_wv=1027&k=5hc3qwj"><img src="documents/qq.group-3.jpg" width="240px;"/><br /><sub><b>開發群🔑：717471210</b></sub></a>
   </tr>
 </table>
