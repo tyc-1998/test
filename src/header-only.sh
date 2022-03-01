@@ -52,7 +52,7 @@ gcc -c -D GUILITE_ON test.cpp
 mv GuiLite.h ../
 echo "Done!"
 echo "You could find GuiLite.h in root folder"
-./.sync.sh GuiLite-header
+# ./.sync.sh GuiLite-header
 
 # clean
 rm *.h *.cpp *.o

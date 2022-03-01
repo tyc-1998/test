@@ -51,7 +51,7 @@ public:
 		return m_phy_fb;
 	}
 
-	int snap_shot(const char* file_name)
+	int snap_shot(const char* file_name)//tbd
 	{
 		if (!m_phy_fb || (m_color_bytes !=2 && m_color_bytes != 4))
 		{
@@ -85,7 +85,7 @@ public:
 private:
 	int				m_width;		//in pixels
 	int				m_height;		//in pixels
-	int				m_color_bytes;	//16 bits, 32 bits only
+	int				m_color_bytes;	//16 bits, 32 bits, 24 bits only
 	void*			m_phy_fb;		//physical framebuffer
 	int				m_phy_read_index;
 	int				m_phy_write_index;
@@ -113,7 +113,7 @@ public:
 	int get_width() { return m_width; }
 	int get_height() { return m_height; }
 
-	unsigned int get_pixel(int x, int y, unsigned int z_order)
+	unsigned int get_pixel(int x, int y, unsigned int z_order)//tbd
 	{
 		if (x >= m_width || y >= m_height || x < 0 || y < 0 || z_order >= Z_ORDER_LEVEL_MAX)
 		{
@@ -160,7 +160,7 @@ public:
 		if (m_layers[z_order].rect.pt_in_rect(x, y))
 		{
 			c_rect layer_rect = m_layers[z_order].rect;
-			if (m_color_bytes == 4)
+			if (m_color_bytes == 4 || m_color_bytes == 3)
 			{
 				((unsigned int*)(m_layers[z_order].fb))[(x - layer_rect.m_left) + (y - layer_rect.m_top) * layer_rect.width()] = rgb;
 			}
@@ -214,7 +214,7 @@ public:
 				{
 					if (layer_rect.pt_in_rect(x, y))
 					{
-						if (m_color_bytes == 4)
+						if (m_color_bytes == 4 || m_color_bytes == 3)
 						{
 							((unsigned int*)m_layers[z_order].fb)[(y - layer_rect.m_top) * layer_rect.width() + (x - layer_rect.m_left)] = rgb;
 						}
@@ -306,7 +306,7 @@ public:
 		fill_rect(rect.m_left, rect.m_top, rect.m_right, rect.m_bottom, rgb, z_order);
 	}
 
-	int flush_screen(int left, int top, int right, int bottom)
+	int flush_screen(int left, int top, int right, int bottom)//tbd
 	{
 		if (left < 0 || left >= m_width || right < 0 || right >= m_width ||
 			top < 0 || top >= m_height || bottom < 0 || bottom >= m_height)
@@ -340,7 +340,7 @@ public:
 	bool is_active() { return m_is_active; }
 	c_display* get_display() { return m_display; }
 
-	int show_layer(c_rect& rect, unsigned int z_order)
+	int show_layer(c_rect& rect, unsigned int z_order)//tbd
 	{
 		ASSERT(z_order >= Z_ORDER_LEVEL_0 && z_order < Z_ORDER_LEVEL_MAX);
 
@@ -362,7 +362,7 @@ public:
 	}
 	void set_active(bool flag) { m_is_active = flag; }
 protected:
-	virtual void fill_rect_on_fb(int x0, int y0, int x1, int y1, unsigned int rgb)
+	virtual void fill_rect_on_fb(int x0, int y0, int x1, int y1, unsigned int rgb)//tbd
 	{
 		int display_width = m_display->get_width();
 		int display_height = m_display->get_height();
@@ -420,7 +420,14 @@ protected:
 	{
 		if (m_fb)
 		{
-			(m_color_bytes == 4) ? ((unsigned int*)m_fb)[y * m_width + x] = rgb : ((unsigned short*)m_fb)[y * m_width + x] = GL_RGB_32_to_16(rgb);
+			if (m_color_bytes == 4 || m_color_bytes == 3)
+			{
+				((unsigned int*)m_fb)[y * m_width + x] = rgb;
+			}
+			else if (m_color_bytes == 2)
+			{
+				((unsigned short*)m_fb)[y * m_width + x] = GL_RGB_32_to_16(rgb);
+			}
 		}
 
 		if (m_is_active && (x < m_display->get_width()) && (y < m_display->get_height()))
@@ -429,9 +436,16 @@ protected:
 			{
 				((unsigned int*)m_phy_fb)[y * (m_display->get_width()) + x] = rgb;
 			}
-			else
+			else if (m_color_bytes == 2)
 			{
 				((unsigned short*)m_phy_fb)[y * (m_display->get_width()) + x] = GL_RGB_32_to_16(rgb);
+			}
+			else if (m_color_bytes == 3)
+			{
+				unsigned char* p_rgb = (unsigned char*)m_phy_fb + 3 * (y * (m_display->get_width()) + x);
+				*p_rgb++ = GL_RGB_R(rgb);
+				*p_rgb++ = GL_RGB_G(rgb);
+				*p_rgb = GL_RGB_B(rgb);
 			}
 			*m_phy_write_index = *m_phy_write_index + 1;
 		}
@@ -450,19 +464,19 @@ protected:
 		m_max_zorder = max_z_order;
 		if (m_display && (m_display->m_surface_cnt > 1))
 		{
-			m_fb = calloc(m_width * m_height, m_color_bytes);
+			m_fb = calloc(m_width * m_height, ((m_color_bytes == 3) ? 4 : m_color_bytes));
 		}
 
 		for (int i = Z_ORDER_LEVEL_0; i < m_max_zorder; i++)
 		{//Top layber fb always be 0
-			ASSERT(m_layers[i].fb = calloc(layer_rect.width() * layer_rect.height(), m_color_bytes));
+			ASSERT(m_layers[i].fb = calloc(layer_rect.width() * layer_rect.height(), ((m_color_bytes == 3) ? 4 : m_color_bytes)));
 			m_layers[i].rect = layer_rect;
 		}
 	}
 
 	int				m_width;		//in pixels
 	int				m_height;		//in pixels
-	int				m_color_bytes;	//16 bits, 32 bits only
+	int				m_color_bytes;	//16 bits, 32 bits, 24bits only
 	void*			m_fb;			//frame buffer you could see
 	c_layer 		m_layers[Z_ORDER_LEVEL_MAX];//all graphic layers
 	bool			m_is_active;	//active flag
@@ -575,7 +589,7 @@ inline c_surface* c_display::alloc_surface(Z_ORDER_LEVEL max_zorder, c_rect laye
 	return m_surface_group[m_surface_index++];
 }
 
-inline int c_display::swipe_surface(c_surface* s0, c_surface* s1, int x0, int x1, int y0, int y1, int offset)
+inline int c_display::swipe_surface(c_surface* s0, c_surface* s1, int x0, int x1, int y0, int y1, int offset)//tbd
 {
 	int surface_width = s0->get_width();
 	int surface_height = s0->get_height();
