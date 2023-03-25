@@ -100,31 +100,20 @@ public:
 		return 0;
 	}
 	void disconnect()
-	{
+	{// disconnect from parent wnd.
 		if (0 == m_id)
 		{
 			return;
-		}
-
-		if (0 != m_top_child)
-		{
-			c_wnd* child = m_top_child;
-			c_wnd* next_child = 0;
-
-			while (child)
-			{
-				next_child = child->m_next_sibling;
-				child->disconnect();
-				child = next_child;
-			}
 		}
 
 		if (0 != m_parent)
 		{
 			m_parent->unlink_child(this);
 		}
+		
 		m_focus_child = 0;
 		m_id = 0;
+		m_attr = (WND_ATTRIBUTION)0;
 	}
 	virtual void on_init_children() {}
 	virtual void on_paint() {}

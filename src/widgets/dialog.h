@@ -54,7 +54,7 @@ public:
 		c_rect rc;
 		dlg->get_screen_rect(rc);
 		dlg->set_attr(WND_ATTRIBUTION(0));
-		surface->show_layer(rc, dlg->m_z_order -  1);
+		surface->show_layers_below_target(rc, dlg->m_z_order);
 
 		//clear the dialog
 		for (int i = 0; i < SURFACE_CNT_MAX; i++)

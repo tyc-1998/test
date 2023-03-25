@@ -204,6 +204,8 @@ public:
 class c_surface {
 	friend class c_display; friend class c_bitmap_operator;
 public:
+	Z_ORDER_LEVEL get_max_z_order() { return m_max_zorder; }
+
 	c_surface(unsigned int width, unsigned int height, unsigned int color_bytes, Z_ORDER_LEVEL max_zorder = Z_ORDER_LEVEL_0, c_rect overlpa_rect = c_rect()) : m_width(width), m_height(height), m_color_bytes(color_bytes), m_fb(0), m_is_active(false), m_top_zorder(Z_ORDER_LEVEL_0), m_phy_write_index(0), m_display(0)
 	{
 		(overlpa_rect == c_rect()) ? set_surface(max_zorder, c_rect(0, 0, width, height)) : set_surface(max_zorder, overlpa_rect);
@@ -423,26 +425,31 @@ public:
 	bool is_active() { return m_is_active; }
 	c_display* get_display() { return m_display; }
 
-	int show_layer(c_rect& rect, unsigned int z_order)
+	int show_layers_below_target(c_rect& target_rect, unsigned int target_z_order)
 	{
-		ASSERT(z_order >= Z_ORDER_LEVEL_0 && z_order < Z_ORDER_LEVEL_MAX);
+		ASSERT(target_z_order > Z_ORDER_LEVEL_0 && target_z_order <= Z_ORDER_LEVEL_MAX);
 
-		c_rect layer_rect = m_layers[z_order].rect;
-		ASSERT(rect.m_left >= layer_rect.m_left && rect.m_right <= layer_rect.m_right &&
-			rect.m_top >= layer_rect.m_top && rect.m_bottom <= layer_rect.m_bottom);
-
-		void* fb = m_layers[z_order].fb;
-		int width = layer_rect.width();
-		for (int y = rect.m_top; y <= rect.m_bottom; y++)
+		for(int z_order = Z_ORDER_LEVEL_0; z_order < target_z_order; z_order++)
 		{
-			for (int x = rect.m_left; x <= rect.m_right; x++)
+			c_rect layer_rect = m_layers[z_order].rect;
+			ASSERT(target_rect.m_left >= layer_rect.m_left && target_rect.m_right <= layer_rect.m_right &&
+				target_rect.m_top >= layer_rect.m_top && target_rect.m_bottom <= layer_rect.m_bottom);
+
+			void* fb = m_layers[z_order].fb;
+			int width = layer_rect.width();
+			for (int y = target_rect.m_top; y <= target_rect.m_bottom; y++)
 			{
-				unsigned int rgb = (m_color_bytes == 2) ? GL_RGB_16_to_32(((unsigned short*)fb)[(x - layer_rect.m_left) + (y - layer_rect.m_top) * width]) : ((unsigned int*)fb)[(x - layer_rect.m_left) + (y - layer_rect.m_top) * width];
-				draw_pixel_low_level(x, y, rgb);
+				for (int x = target_rect.m_left; x <= target_rect.m_right; x++)
+				{
+					unsigned int rgb = (m_color_bytes == 2) ? GL_RGB_16_to_32(((unsigned short*)fb)[(x - layer_rect.m_left) + (y - layer_rect.m_top) * width]) : ((unsigned int*)fb)[(x - layer_rect.m_left) + (y - layer_rect.m_top) * width];
+					draw_pixel_low_level(x, y, rgb);
+				}
 			}
 		}
+		
 		return 0;
 	}
+
 	void set_active(bool flag) { m_is_active = flag; }
 protected:
 	virtual void fill_rect_low_level(int x0, int y0, int x1, int y1, unsigned int rgb)
