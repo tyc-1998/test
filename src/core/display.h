@@ -198,7 +198,8 @@ class c_layer
 public:
 	c_layer() { fb = 0; }
 	void* fb;		//framebuffer
-	c_rect 	rect;	//framebuffer area
+	c_rect rect;	//framebuffer area
+	c_rect active_rect;
 };
 
 class c_surface {
@@ -239,23 +240,24 @@ public:
 		{
 			return;
 		}
+
 		if (z_order > (unsigned int)m_max_zorder)
 		{
 			ASSERT(false);
 			return;
 		}
 
-		if (z_order == m_max_zorder)
-		{
-			return draw_pixel_low_level(x, y, rgb);
-		}
-		
 		if (z_order > (unsigned int)m_top_zorder)
 		{
 			m_top_zorder = (Z_ORDER_LEVEL)z_order;
 		}
 
-		if (m_layers[z_order].rect.pt_in_rect(x, y))
+		if (z_order == m_max_zorder)
+		{
+			return draw_pixel_low_level(x, y, rgb);
+		}
+
+		if (m_layers[z_order].active_rect.pt_in_rect(x, y))
 		{
 			c_rect layer_rect = m_layers[z_order].rect;
 			if (m_color_bytes == 2)
@@ -276,7 +278,7 @@ public:
 		bool be_overlapped = false;
 		for (unsigned int tmp_z_order = Z_ORDER_LEVEL_MAX - 1; tmp_z_order > z_order; tmp_z_order--)
 		{
-			if (m_layers[tmp_z_order].rect.pt_in_rect(x, y))
+			if (m_layers[tmp_z_order].active_rect.pt_in_rect(x, y))
 			{
 				be_overlapped = true;
 				break;
@@ -304,7 +306,7 @@ public:
 		if (z_order == m_top_zorder)
 		{
 			int x, y;
-			c_rect layer_rect = m_layers[z_order].rect;
+			c_rect layer_rect = m_layers[z_order].active_rect;
 			unsigned int rgb_16 = GL_RGB_32_to_16(rgb);
 			for (y = y0; y <= y1; y++)
 			{
@@ -425,29 +427,35 @@ public:
 	bool is_active() { return m_is_active; }
 	c_display* get_display() { return m_display; }
 
-	int show_layers_below_target(c_rect& target_rect, unsigned int target_z_order)
+	void enable_layer(c_rect& target_rect, unsigned int target_z_order)
 	{
+		m_layers[target_z_order].active_rect = target_rect;
+	}
+
+	void disable_layer(unsigned int target_z_order)
+	{//show layers below the target layer
 		ASSERT(target_z_order > Z_ORDER_LEVEL_0 && target_z_order <= Z_ORDER_LEVEL_MAX);
 
+		c_rect target_rect = m_layers[target_z_order].active_rect;
 		for(int z_order = Z_ORDER_LEVEL_0; z_order < target_z_order; z_order++)
 		{
 			c_rect layer_rect = m_layers[z_order].rect;
+			c_rect active_rect = m_layers[z_order].active_rect;
 			ASSERT(target_rect.m_left >= layer_rect.m_left && target_rect.m_right <= layer_rect.m_right &&
 				target_rect.m_top >= layer_rect.m_top && target_rect.m_bottom <= layer_rect.m_bottom);
 
 			void* fb = m_layers[z_order].fb;
 			int width = layer_rect.width();
-			for (int y = target_rect.m_top; y <= target_rect.m_bottom; y++)
+			for (int y = target_rect.m_top; (y <= target_rect.m_bottom && y <= active_rect.m_bottom); y++)
 			{
-				for (int x = target_rect.m_left; x <= target_rect.m_right; x++)
+				for (int x = target_rect.m_left; (x <= target_rect.m_right && x <= active_rect.m_right); x++)
 				{
 					unsigned int rgb = (m_color_bytes == 2) ? GL_RGB_16_to_32(((unsigned short*)fb)[(x - layer_rect.m_left) + (y - layer_rect.m_top) * width]) : ((unsigned int*)fb)[(x - layer_rect.m_left) + (y - layer_rect.m_top) * width];
 					draw_pixel_low_level(x, y, rgb);
 				}
 			}
 		}
-		
-		return 0;
+		m_layers[target_z_order].active_rect = c_rect();//empty active rect
 	}
 
 	void set_active(bool flag) { m_is_active = flag; }
@@ -518,6 +526,10 @@ protected:
 		{//Top layber fb always be 0
 			ASSERT(m_layers[i].fb = calloc(layer_rect.width() * layer_rect.height(), m_color_bytes));
 			m_layers[i].rect = layer_rect;
+			if(i == Z_ORDER_LEVEL_0)
+			{
+				m_layers[i].active_rect = layer_rect;
+			}
 		}
 	}
 

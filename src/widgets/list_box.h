@@ -65,7 +65,7 @@ protected:
 		case STATUS_NORMAL:
 			if (m_z_order > m_parent->get_z_order())
 			{
-				m_surface->show_layers_below_target(m_list_screen_rect, m_z_order);
+				m_surface->disable_layer(m_z_order);
 				m_z_order = m_parent->get_z_order();
 				m_attr = (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS);
 			}
@@ -75,7 +75,7 @@ protected:
 		case STATUS_FOCUSED:
 			if (m_z_order > m_parent->get_z_order())
 			{
-				m_surface->show_layers_below_target(m_list_screen_rect, m_z_order);
+				m_surface->disable_layer(m_z_order);
 				m_z_order = m_parent->get_z_order();
 				m_attr = (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS);
 			}
@@ -93,6 +93,8 @@ protected:
 				{
 					m_z_order++;
 				}
+
+				m_surface->enable_layer(m_list_screen_rect, m_z_order);
 				m_attr = (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS | ATTR_PRIORITY);
 				show_list();
 			}

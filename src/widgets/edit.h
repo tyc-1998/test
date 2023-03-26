@@ -47,7 +47,7 @@ protected:
 		switch (m_status)
 		{
 		case STATUS_NORMAL:
-			if (s_keyboard.get_attr()&ATTR_VISIBLE == ATTR_VISIBLE)
+			if ((s_keyboard.get_attr()&ATTR_VISIBLE) == ATTR_VISIBLE)
 			{
 				s_keyboard.close_keyboard();
 				m_attr = (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS);
@@ -56,7 +56,7 @@ protected:
 			c_word::draw_string_in_rect(m_surface, m_parent->get_z_order(), m_str, rect, m_font, m_font_color, c_theme::get_color(COLOR_WND_NORMAL), ALIGN_HCENTER | ALIGN_VCENTER);
 			break;
 		case STATUS_FOCUSED:
-			if (s_keyboard.get_attr()&ATTR_VISIBLE == ATTR_VISIBLE)
+			if ((s_keyboard.get_attr()&ATTR_VISIBLE) == ATTR_VISIBLE)
 			{
 				s_keyboard.close_keyboard();
 				m_attr = (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS);
@@ -65,8 +65,9 @@ protected:
 			c_word::draw_string_in_rect(m_surface, m_parent->get_z_order(), m_str, rect, m_font, m_font_color, c_theme::get_color(COLOR_WND_FOCUS), ALIGN_HCENTER | ALIGN_VCENTER);
 			break;
 		case STATUS_PUSHED:
-			if (s_keyboard.get_attr()&ATTR_VISIBLE != ATTR_VISIBLE)
+			if ((s_keyboard.get_attr()&ATTR_VISIBLE) != ATTR_VISIBLE)
 			{
+				m_attr = (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS | ATTR_PRIORITY);
 				s_keyboard.open_keyboard(this, IDD_KEY_BOARD, m_kb_style, WND_CALLBACK(&c_edit::on_key_board_click));
 			}
 			m_surface->fill_rect(rect.m_left, rect.m_top, rect.m_right, rect.m_bottom, c_theme::get_color(COLOR_WND_PUSHED), m_parent->get_z_order());

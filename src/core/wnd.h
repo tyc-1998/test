@@ -52,7 +52,7 @@ typedef void (c_wnd::*WND_CALLBACK)(int, int);
 class c_wnd
 {
 public:
-	c_wnd() : m_status(STATUS_NORMAL), m_attr((WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS)), m_parent(0), m_top_child(0), m_prev_sibling(0), m_next_sibling(0),
+	c_wnd() : m_status(STATUS_NORMAL), m_attr(WND_ATTRIBUTION(0)), m_parent(0), m_top_child(0), m_prev_sibling(0), m_next_sibling(0),
 		m_str(0), m_font_color(0), m_bg_color(0), m_id(0), m_z_order(Z_ORDER_LEVEL_0), m_focus_child(0), m_surface(0) {};
 	virtual ~c_wnd() {};
 	virtual int connect(c_wnd *parent, unsigned short resource_id, const char* str,
@@ -99,22 +99,36 @@ public:
 		}
 		return 0;
 	}
+
 	void disconnect()
-	{// disconnect from parent wnd.
+	{
 		if (0 == m_id)
 		{
 			return;
+		}
+
+		if (0 != m_top_child)
+		{
+			c_wnd* child = m_top_child;
+			c_wnd* next_child = 0;
+
+			while (child)
+			{
+				next_child = child->m_next_sibling;
+				child->disconnect();
+				child = next_child;
+			}
 		}
 
 		if (0 != m_parent)
 		{
 			m_parent->unlink_child(this);
 		}
-		
 		m_focus_child = 0;
 		m_id = 0;
 		m_attr = (WND_ATTRIBUTION)0;
 	}
+
 	virtual void on_init_children() {}
 	virtual void on_paint() {}
 	virtual void show_window()
@@ -287,22 +301,28 @@ public:
 	c_wnd* get_prev_sibling() const { return m_prev_sibling; }
 	c_wnd* get_next_sibling() const { return m_next_sibling; }
 
+	c_wnd* search_priority_sibling(c_wnd* root)
+	{
+		c_wnd* priority_wnd = 0;
+		while (root)
+		{
+			if ((root->m_attr & ATTR_PRIORITY) && (root->m_attr & ATTR_VISIBLE))
+			{
+				priority_wnd = root;
+				break;
+			}
+			root = root->m_next_sibling;
+		}
+
+		return priority_wnd;
+	}
+
 	virtual void on_touch(int x, int y, TOUCH_ACTION action)
 	{
 		x -= m_wnd_rect.m_left;
 		y -= m_wnd_rect.m_top;
 
-		c_wnd* priority_wnd = 0;
-		c_wnd* tmp_child = m_top_child;
-		while (tmp_child)
-		{
-			if ((tmp_child->m_attr & ATTR_PRIORITY) && (tmp_child->m_attr & ATTR_VISIBLE))
-			{
-				priority_wnd = tmp_child;
-				break;
-			}
-			tmp_child = tmp_child->m_next_sibling;
-		}
+		c_wnd* priority_wnd = search_priority_sibling(m_top_child);
 		if (priority_wnd)
 		{
 			return priority_wnd->on_touch(x, y, action);
@@ -325,17 +345,7 @@ public:
 	}
 	virtual void on_navigate(NAVIGATION_KEY key)
 	{
-		c_wnd* priority_wnd = 0;
-		c_wnd* tmp_child = m_top_child;
-		while (tmp_child)
-		{
-			if ((tmp_child->m_attr & ATTR_PRIORITY) && (tmp_child->m_attr & ATTR_VISIBLE))
-			{
-				priority_wnd = tmp_child;
-				break;
-			}
-			tmp_child = tmp_child->m_next_sibling;
-		}
+		c_wnd* priority_wnd = search_priority_sibling(m_top_child);
 		if (priority_wnd)
 		{
 			return priority_wnd->on_navigate(key);

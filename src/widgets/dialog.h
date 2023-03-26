@@ -19,7 +19,7 @@ typedef struct
 class c_dialog : public c_wnd
 {
 public:
-	static int open_dialog(c_dialog* p_dlg, bool modal_mode = true)
+	static int open_dialog(c_dialog* p_dlg)
 	{
 		if (0 == p_dlg)
 		{
@@ -37,7 +37,11 @@ public:
 			cur_dlg->set_attr(WND_ATTRIBUTION(0));
 		}
 
-		p_dlg->set_attr(modal_mode ? (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS | ATTR_PRIORITY) : (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS));
+		c_rect rc;
+		p_dlg->get_screen_rect(rc);
+		p_dlg->get_surface()->enable_layer(rc, p_dlg->m_z_order);
+
+		p_dlg->set_attr((WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS | ATTR_PRIORITY));
 		p_dlg->show_window();
 		p_dlg->set_me_the_dialog();
 		return 1;
@@ -51,10 +55,9 @@ public:
 		{
 			return 0;
 		}
-		c_rect rc;
-		dlg->get_screen_rect(rc);
+
 		dlg->set_attr(WND_ATTRIBUTION(0));
-		surface->show_layers_below_target(rc, dlg->m_z_order);
+		surface->disable_layer(dlg->m_z_order);
 
 		//clear the dialog
 		for (int i = 0; i < SURFACE_CNT_MAX; i++)
