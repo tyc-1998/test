@@ -52,7 +52,7 @@ typedef void (c_wnd::*WND_CALLBACK)(int, int);
 class c_wnd
 {
 public:
-	c_wnd() : m_status(STATUS_NORMAL), m_attr(WND_ATTRIBUTION(0)), m_parent(0), m_top_child(0), m_prev_sibling(0), m_next_sibling(0),
+	c_wnd() : m_status(STATUS_NORMAL), m_attr((WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS)), m_parent(0), m_top_child(0), m_prev_sibling(0), m_next_sibling(0),
 		m_str(0), m_font_color(0), m_bg_color(0), m_id(0), m_z_order(Z_ORDER_LEVEL_0), m_focus_child(0), m_surface(0) {};
 	virtual ~c_wnd() {};
 	virtual int connect(c_wnd *parent, unsigned short resource_id, const char* str,
@@ -102,30 +102,11 @@ public:
 
 	void disconnect()
 	{
-		if (0 == m_id)
-		{
-			return;
-		}
-
-		if (0 != m_top_child)
-		{
-			c_wnd* child = m_top_child;
-			c_wnd* next_child = 0;
-
-			while (child)
-			{
-				next_child = child->m_next_sibling;
-				child->disconnect();
-				child = next_child;
-			}
-		}
-
 		if (0 != m_parent)
 		{
 			m_parent->unlink_child(this);
 		}
 		m_focus_child = 0;
-		m_id = 0;
 		m_attr = (WND_ATTRIBUTION)0;
 	}
 
@@ -181,15 +162,8 @@ public:
 	unsigned int get_bg_color() { return m_bg_color; }
 	void set_font_type(const LATTICE_FONT_INFO *font_type) { m_font = font_type; }
 	const void* get_font_type() { return m_font; }
-
-	void set_wnd_pos(short x, short y, short width, short height)
-	{
-		m_wnd_rect.m_left = x;
-		m_wnd_rect.m_top = y;
-		m_wnd_rect.m_right = x + width - 1;
-		m_wnd_rect.m_bottom = y + height - 1;
-	}
 	void get_wnd_rect(c_rect &rect) const {	rect = m_wnd_rect; }
+
 	void get_screen_rect(c_rect &rect) const
 	{
 		int l = 0;
@@ -461,16 +435,7 @@ protected:
 		WND_TREE* p_cur = p_child_tree;
 		while (p_cur->p_wnd)
 		{
-			if (0 != p_cur->p_wnd->m_id)
-			{//This wnd has been used! Do not share!
-				ASSERT(false);
-				return -1;
-			}
-			else
-			{
-				p_cur->p_wnd->connect(this, p_cur->resource_id, p_cur->str,
-					p_cur->x, p_cur->y, p_cur->width, p_cur->height, p_cur->p_child_tree);
-			}
+			p_cur->p_wnd->connect(this, p_cur->resource_id, p_cur->str,p_cur->x, p_cur->y, p_cur->width, p_cur->height, p_cur->p_child_tree);
 			p_cur++;
 			sum++;
 		}

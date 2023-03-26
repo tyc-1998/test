@@ -57,6 +57,7 @@ extern WND_TREE g_number_board_children[];
 class c_keyboard: public c_wnd
 {
 public:
+	c_keyboard() { m_attr = WND_ATTRIBUTION(0); }
 	int open_keyboard(c_wnd *user, unsigned short resource_id, KEYBOARD_STYLE style, WND_CALLBACK on_click)
 	{
 		c_rect user_rect;
