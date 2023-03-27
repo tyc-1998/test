@@ -483,22 +483,22 @@ public:
 		}
 		if (z_order == m_top_zorder)
 		{
-			int x, y;
-			c_rect layer_rect = m_layers[z_order].active_rect;
+			int width = m_layers[z_order].rect.width();
+			c_rect active_rect = m_layers[z_order].active_rect;
 			unsigned int rgb_16 = GL_RGB_32_to_16(rgb);
-			for (y = y0; y <= y1; y++)
+			for (int y = y0; y <= y1; y++)
 			{
-				for (x = x0; x <= x1; x++)
+				for (int x = x0; x <= x1; x++)
 				{
-					if (layer_rect.pt_in_rect(x, y))
+					if (active_rect.pt_in_rect(x, y))
 					{
 						if (m_color_bytes == 2)
 						{
-							((unsigned short*)m_layers[z_order].fb)[(y - layer_rect.m_top) * layer_rect.width() + (x - layer_rect.m_left)] = rgb_16;
+							((unsigned short*)m_layers[z_order].fb)[(y - active_rect.m_top) * width + (x - active_rect.m_left)] = rgb_16;
 						}
 						else
 						{
-							((unsigned int*)m_layers[z_order].fb)[(y - layer_rect.m_top) * layer_rect.width() + (x - layer_rect.m_left)] = rgb;	
+							((unsigned int*)m_layers[z_order].fb)[(y - active_rect.m_top) * width + (x - active_rect.m_left)] = rgb;	
 						}
 					}
 				}
