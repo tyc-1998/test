@@ -39,7 +39,7 @@ public:
 
 		c_rect rc;
 		p_dlg->get_screen_rect(rc);
-		p_dlg->get_surface()->enable_layer(rc, p_dlg->m_z_order);
+		p_dlg->get_surface()->activate_layer(rc, p_dlg->m_z_order);
 
 		p_dlg->set_attr((WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS | ATTR_PRIORITY));
 		p_dlg->show_window();
@@ -57,7 +57,7 @@ public:
 		}
 
 		dlg->set_attr(WND_ATTRIBUTION(0));
-		surface->disable_layer(dlg->m_z_order);
+		surface->activate_layer(c_rect(), dlg->m_z_order);//inactivate the layer of dialog by empty rect.
 
 		//clear the dialog
 		for (int i = 0; i < SURFACE_CNT_MAX; i++)

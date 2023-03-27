@@ -81,7 +81,7 @@ public:
 		m_on_click = on_click;
 		c_rect rc;
 		get_screen_rect(rc);
-		m_surface->enable_layer(rc, m_z_order);
+		m_surface->activate_layer(rc, m_z_order);
 		show_window();
 		return 0;
 	}
@@ -89,7 +89,7 @@ public:
 	void close_keyboard()
 	{
 		c_wnd::disconnect();
-		m_surface->disable_layer(m_z_order);
+		m_surface->activate_layer(c_rect(), m_z_order);//inactivate the layer of keyboard by empty rect.
 	}
 	
 	virtual void on_init_children()

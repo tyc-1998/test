@@ -240,7 +240,7 @@ public:
 		{
 			return;
 		}
-
+		
 		if (z_order > (unsigned int)m_max_zorder)
 		{
 			ASSERT(false);
@@ -267,7 +267,7 @@ public:
 			else
 			{
 				((unsigned int*)(m_layers[z_order].fb))[(x - layer_rect.m_left) + (y - layer_rect.m_top) * layer_rect.width()] = rgb;
-			}
+			}	
 		}
 		
 		if (z_order == m_top_zorder)
@@ -427,35 +427,30 @@ public:
 	bool is_active() { return m_is_active; }
 	c_display* get_display() { return m_display; }
 
-	void enable_layer(c_rect& target_rect, unsigned int target_z_order)
+	void activate_layer(c_rect active_rect, unsigned int active_z_order)//empty active rect means inactivating the layer
 	{
-		m_layers[target_z_order].active_rect = target_rect;
-	}
+		ASSERT(active_z_order > Z_ORDER_LEVEL_0 && active_z_order <= Z_ORDER_LEVEL_MAX);
+		c_rect current_active_rect = m_layers[active_z_order].active_rect;
 
-	void disable_layer(unsigned int target_z_order)
-	{//show layers below the target layer
-		ASSERT(target_z_order > Z_ORDER_LEVEL_0 && target_z_order <= Z_ORDER_LEVEL_MAX);
-
-		c_rect target_rect = m_layers[target_z_order].active_rect;
-		for(int z_order = Z_ORDER_LEVEL_0; z_order < target_z_order; z_order++)
+		//inactivate the old active rect of the layer, and show the layers below the rect.
+		for(int low_z_order = Z_ORDER_LEVEL_0; low_z_order < active_z_order; low_z_order++)
 		{
-			c_rect layer_rect = m_layers[z_order].rect;
-			c_rect active_rect = m_layers[z_order].active_rect;
-			ASSERT(target_rect.m_left >= layer_rect.m_left && target_rect.m_right <= layer_rect.m_right &&
-				target_rect.m_top >= layer_rect.m_top && target_rect.m_bottom <= layer_rect.m_bottom);
+			c_rect low_layer_rect = m_layers[low_z_order].rect;
+			c_rect low_active_rect = m_layers[low_z_order].active_rect;
 
-			void* fb = m_layers[z_order].fb;
-			int width = layer_rect.width();
-			for (int y = target_rect.m_top; (y <= target_rect.m_bottom && y <= active_rect.m_bottom); y++)
+			void* fb = m_layers[low_z_order].fb;
+			int width = low_layer_rect.width();
+			for (int y = current_active_rect.m_top; (y <= current_active_rect.m_bottom && y <= low_active_rect.m_bottom); y++)
 			{
-				for (int x = target_rect.m_left; (x <= target_rect.m_right && x <= active_rect.m_right); x++)
+				for (int x = current_active_rect.m_left; (x <= current_active_rect.m_right && x <= low_active_rect.m_right); x++)
 				{
-					unsigned int rgb = (m_color_bytes == 2) ? GL_RGB_16_to_32(((unsigned short*)fb)[(x - layer_rect.m_left) + (y - layer_rect.m_top) * width]) : ((unsigned int*)fb)[(x - layer_rect.m_left) + (y - layer_rect.m_top) * width];
+					if (!low_layer_rect.pt_in_rect(x, y)) continue;
+					unsigned int rgb = (m_color_bytes == 2) ? GL_RGB_16_to_32(((unsigned short*)fb)[(x - low_layer_rect.m_left) + (y - low_layer_rect.m_top) * width]) : ((unsigned int*)fb)[(x - low_layer_rect.m_left) + (y - low_layer_rect.m_top) * width];
 					draw_pixel_low_level(x, y, rgb);
 				}
 			}
 		}
-		m_layers[target_z_order].active_rect = c_rect();//empty active rect
+		m_layers[active_z_order].active_rect = active_rect;//set the new acitve rect.
 	}
 
 	void set_active(bool flag) { m_is_active = flag; }

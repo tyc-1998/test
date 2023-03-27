@@ -61,7 +61,7 @@ private:
 class c_rect
 {
 public:
-	c_rect(){ m_left = m_top = m_right = m_bottom = -1; }
+	c_rect(){ m_left = m_top = m_right = m_bottom = -1; }//empty rect
 	c_rect(int left, int top, int width, int height)
 	{
 		set_rect(left, top, width, height);
@@ -426,6 +426,7 @@ public:
 		{
 			return;
 		}
+		
 		if (z_order > (unsigned int)m_max_zorder)
 		{
 			ASSERT(false);
@@ -449,7 +450,7 @@ public:
 			else
 			{
 				((unsigned int*)(m_layers[z_order].fb))[(x - layer_rect.m_left) + (y - layer_rect.m_top) * layer_rect.width()] = rgb;
-			}
+			}	
 		}
 		
 		if (z_order == m_top_zorder)
@@ -589,32 +590,28 @@ public:
 	}
 	bool is_active() { return m_is_active; }
 	c_display* get_display() { return m_display; }
-	void enable_layer(c_rect& target_rect, unsigned int target_z_order)
+	void activate_layer(c_rect active_rect, unsigned int active_z_order)//empty active rect means inactivating the layer
 	{
-		m_layers[target_z_order].active_rect = target_rect;
-	}
-	void disable_layer(unsigned int target_z_order)
-	{//show layers below the target layer
-		ASSERT(target_z_order > Z_ORDER_LEVEL_0 && target_z_order <= Z_ORDER_LEVEL_MAX);
-		c_rect target_rect = m_layers[target_z_order].active_rect;
-		for(int z_order = Z_ORDER_LEVEL_0; z_order < target_z_order; z_order++)
+		ASSERT(active_z_order > Z_ORDER_LEVEL_0 && active_z_order <= Z_ORDER_LEVEL_MAX);
+		c_rect current_active_rect = m_layers[active_z_order].active_rect;
+		//inactivate the old active rect of the layer, and show the layers below the rect.
+		for(int low_z_order = Z_ORDER_LEVEL_0; low_z_order < active_z_order; low_z_order++)
 		{
-			c_rect layer_rect = m_layers[z_order].rect;
-			c_rect active_rect = m_layers[z_order].active_rect;
-			ASSERT(target_rect.m_left >= layer_rect.m_left && target_rect.m_right <= layer_rect.m_right &&
-				target_rect.m_top >= layer_rect.m_top && target_rect.m_bottom <= layer_rect.m_bottom);
-			void* fb = m_layers[z_order].fb;
-			int width = layer_rect.width();
-			for (int y = target_rect.m_top; (y <= target_rect.m_bottom && y <= active_rect.m_bottom); y++)
+			c_rect low_layer_rect = m_layers[low_z_order].rect;
+			c_rect low_active_rect = m_layers[low_z_order].active_rect;
+			void* fb = m_layers[low_z_order].fb;
+			int width = low_layer_rect.width();
+			for (int y = current_active_rect.m_top; (y <= current_active_rect.m_bottom && y <= low_active_rect.m_bottom); y++)
 			{
-				for (int x = target_rect.m_left; (x <= target_rect.m_right && x <= active_rect.m_right); x++)
+				for (int x = current_active_rect.m_left; (x <= current_active_rect.m_right && x <= low_active_rect.m_right); x++)
 				{
-					unsigned int rgb = (m_color_bytes == 2) ? GL_RGB_16_to_32(((unsigned short*)fb)[(x - layer_rect.m_left) + (y - layer_rect.m_top) * width]) : ((unsigned int*)fb)[(x - layer_rect.m_left) + (y - layer_rect.m_top) * width];
+					if (!low_layer_rect.pt_in_rect(x, y)) continue;
+					unsigned int rgb = (m_color_bytes == 2) ? GL_RGB_16_to_32(((unsigned short*)fb)[(x - low_layer_rect.m_left) + (y - low_layer_rect.m_top) * width]) : ((unsigned int*)fb)[(x - low_layer_rect.m_left) + (y - low_layer_rect.m_top) * width];
 					draw_pixel_low_level(x, y, rgb);
 				}
 			}
 		}
-		m_layers[target_z_order].active_rect = c_rect();//empty active rect
+		m_layers[active_z_order].active_rect = active_rect;//set the new acitve rect.
 	}
 	void set_active(bool flag) { m_is_active = flag; }
 protected:
@@ -1295,16 +1292,23 @@ public:
 	}
 	void disconnect()
 	{
-		if (0 == m_id)
+		if (0 != m_top_child)
 		{
-			return;
+			c_wnd* child = m_top_child;
+			c_wnd* next_child = 0;
+			while (child)
+			{
+				next_child = child->m_next_sibling;
+				child->disconnect();
+				child = next_child;
+			}
 		}
 		if (0 != m_parent)
 		{
 			m_parent->unlink_child(this);
 		}
 		m_focus_child = 0;
-		m_attr = (WND_ATTRIBUTION)0;
+		m_attr = WND_ATTRIBUTION(0);
 	}
 	virtual void on_init_children() {}
 	virtual void on_paint() {}
@@ -1352,13 +1356,6 @@ public:
 	unsigned int get_bg_color() { return m_bg_color; }
 	void set_font_type(const LATTICE_FONT_INFO *font_type) { m_font = font_type; }
 	const void* get_font_type() { return m_font; }
-	void set_wnd_pos(short x, short y, short width, short height)
-	{
-		m_wnd_rect.m_left = x;
-		m_wnd_rect.m_top = y;
-		m_wnd_rect.m_right = x + width - 1;
-		m_wnd_rect.m_bottom = y + height - 1;
-	}
 	void get_wnd_rect(c_rect &rect) const {	rect = m_wnd_rect; }
 	void get_screen_rect(c_rect &rect) const
 	{
@@ -1745,7 +1742,7 @@ public:
 		}
 		c_rect rc;
 		p_dlg->get_screen_rect(rc);
-		p_dlg->get_surface()->enable_layer(rc, p_dlg->m_z_order);
+		p_dlg->get_surface()->activate_layer(rc, p_dlg->m_z_order);
 		p_dlg->set_attr((WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS | ATTR_PRIORITY));
 		p_dlg->show_window();
 		p_dlg->set_me_the_dialog();
@@ -1759,7 +1756,7 @@ public:
 			return 0;
 		}
 		dlg->set_attr(WND_ATTRIBUTION(0));
-		surface->disable_layer(dlg->m_z_order);
+		surface->activate_layer(c_rect(), dlg->m_z_order);//inactivate the layer of dialog by empty rect.
 		//clear the dialog
 		for (int i = 0; i < SURFACE_CNT_MAX; i++)
 		{
@@ -1890,14 +1887,14 @@ public:
 		m_on_click = on_click;
 		c_rect rc;
 		get_screen_rect(rc);
-		m_surface->enable_layer(rc, m_z_order);
+		m_surface->activate_layer(rc, m_z_order);
 		show_window();
 		return 0;
 	}
 	void close_keyboard()
 	{
 		c_wnd::disconnect();
-		m_surface->disable_layer(m_z_order);
+		m_surface->activate_layer(c_rect(), m_z_order);//inactivate the layer of keyboard by empty rect.
 	}
 	
 	virtual void on_init_children()
@@ -2315,7 +2312,7 @@ protected:
 		case STATUS_NORMAL:
 			if (m_z_order > m_parent->get_z_order())
 			{
-				m_surface->disable_layer(m_z_order);
+				m_surface->activate_layer(c_rect(), m_z_order);//inactivate the layer of list by empty rect.
 				m_z_order = m_parent->get_z_order();
 				m_attr = (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS);
 			}
@@ -2325,7 +2322,7 @@ protected:
 		case STATUS_FOCUSED:
 			if (m_z_order > m_parent->get_z_order())
 			{
-				m_surface->disable_layer(m_z_order);
+				m_surface->activate_layer(c_rect(), m_z_order);//inactivate the layer of list by empty rect.
 				m_z_order = m_parent->get_z_order();
 				m_attr = (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS);
 			}
@@ -2342,9 +2339,9 @@ protected:
 				if (m_z_order == m_parent->get_z_order())
 				{
 					m_z_order++;
+					m_surface->activate_layer(m_list_screen_rect, m_z_order);
+					m_attr = (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS | ATTR_PRIORITY);
 				}
-				m_surface->enable_layer(m_list_screen_rect, m_z_order);
-				m_attr = (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS | ATTR_PRIORITY);
 				show_list();
 			}
 			break;
