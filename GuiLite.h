@@ -450,7 +450,7 @@ public:
 			else
 			{
 				((unsigned int*)(m_layers[z_order].fb))[(x - layer_rect.m_left) + (y - layer_rect.m_top) * layer_rect.width()] = rgb;
-			}	
+			}
 		}
 		
 		if (z_order == m_top_zorder)
