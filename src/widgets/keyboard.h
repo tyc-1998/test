@@ -163,6 +163,7 @@ protected:
 			}
 			goto InputChar;
 		}
+		if (id == 0x90) return;//TBD
 		ASSERT(false);
 	InputChar:
 		m_str[m_str_len++] = id;

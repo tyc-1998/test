@@ -221,8 +221,8 @@ private:
 typedef enum
 {
 	Z_ORDER_LEVEL_0,//lowest graphic level
-	Z_ORDER_LEVEL_1,//middle graphic level
-	Z_ORDER_LEVEL_2,//highest graphic level
+	Z_ORDER_LEVEL_1,//middle graphic level, call activate_layer before use it, draw everything inside the active rect.
+	Z_ORDER_LEVEL_2,//highest graphic level, call activate_layer before use it, draw everything inside the active rect.
 	Z_ORDER_LEVEL_MAX
 }Z_ORDER_LEVEL;
 struct DISPLAY_DRIVER
@@ -440,7 +440,7 @@ public:
 		{
 			return draw_pixel_low_level(x, y, rgb);
 		}
-		if (m_layers[z_order].active_rect.pt_in_rect(x, y))
+		if (m_layers[z_order].rect.pt_in_rect(x, y))
 		{
 			c_rect layer_rect = m_layers[z_order].rect;
 			if (m_color_bytes == 2)
@@ -484,21 +484,21 @@ public:
 		if (z_order == m_top_zorder)
 		{
 			int width = m_layers[z_order].rect.width();
-			c_rect active_rect = m_layers[z_order].active_rect;
+			c_rect layer_rect = m_layers[z_order].rect;
 			unsigned int rgb_16 = GL_RGB_32_to_16(rgb);
 			for (int y = y0; y <= y1; y++)
 			{
 				for (int x = x0; x <= x1; x++)
 				{
-					if (active_rect.pt_in_rect(x, y))
+					if (layer_rect.pt_in_rect(x, y))
 					{
 						if (m_color_bytes == 2)
 						{
-							((unsigned short*)m_layers[z_order].fb)[(y - active_rect.m_top) * width + (x - active_rect.m_left)] = rgb_16;
+							((unsigned short*)m_layers[z_order].fb)[(y - layer_rect.m_top) * width + (x - layer_rect.m_left)] = rgb_16;
 						}
 						else
 						{
-							((unsigned int*)m_layers[z_order].fb)[(y - active_rect.m_top) * width + (x - active_rect.m_left)] = rgb;	
+							((unsigned int*)m_layers[z_order].fb)[(y - layer_rect.m_top) * width + (x - layer_rect.m_left)] = rgb;	
 						}
 					}
 				}
@@ -593,8 +593,9 @@ public:
 	void activate_layer(c_rect active_rect, unsigned int active_z_order)//empty active rect means inactivating the layer
 	{
 		ASSERT(active_z_order > Z_ORDER_LEVEL_0 && active_z_order <= Z_ORDER_LEVEL_MAX);
+		
+		//Show the layers below the current active rect.
 		c_rect current_active_rect = m_layers[active_z_order].active_rect;
-		//inactivate the old active rect of the layer, and show the layers below the rect.
 		for(int low_z_order = Z_ORDER_LEVEL_0; low_z_order < active_z_order; low_z_order++)
 		{
 			c_rect low_layer_rect = m_layers[low_z_order].rect;
@@ -1724,7 +1725,7 @@ typedef struct
 class c_dialog : public c_wnd
 {
 public:
-	static int open_dialog(c_dialog* p_dlg)
+	static int open_dialog(c_dialog* p_dlg, bool modal_mode = true)
 	{
 		if (0 == p_dlg)
 		{
@@ -1743,7 +1744,7 @@ public:
 		c_rect rc;
 		p_dlg->get_screen_rect(rc);
 		p_dlg->get_surface()->activate_layer(rc, p_dlg->m_z_order);
-		p_dlg->set_attr((WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS | ATTR_PRIORITY));
+		p_dlg->set_attr(modal_mode ? (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS | ATTR_PRIORITY) : (WND_ATTRIBUTION)(ATTR_VISIBLE | ATTR_FOCUS));
 		p_dlg->show_window();
 		p_dlg->set_me_the_dialog();
 		return 1;
@@ -1965,6 +1966,7 @@ protected:
 			}
 			goto InputChar;
 		}
+		if (id == 0x90) return;//TBD
 		ASSERT(false);
 	InputChar:
 		m_str[m_str_len++] = id;
@@ -2364,6 +2366,13 @@ protected:
 		switch (key)
 		{
 		case NAV_ENTER:
+			if (STATUS_PUSHED == m_status)
+			{
+				if(on_change)
+				{
+					(m_parent->*(on_change))(m_id, m_selected_item);
+				}
+			}
 			on_touch(m_wnd_rect.m_left, m_wnd_rect.m_top, TOUCH_DOWN);
 			on_touch(m_wnd_rect.m_left, m_wnd_rect.m_top, TOUCH_UP);
 			return;

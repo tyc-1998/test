@@ -117,6 +117,13 @@ protected:
 		switch (key)
 		{
 		case NAV_ENTER:
+			if (STATUS_PUSHED == m_status)
+			{
+				if(on_change)
+				{
+					(m_parent->*(on_change))(m_id, m_selected_item);
+				}
+			}
 			on_touch(m_wnd_rect.m_left, m_wnd_rect.m_top, TOUCH_DOWN);
 			on_touch(m_wnd_rect.m_left, m_wnd_rect.m_top, TOUCH_UP);
 			return;

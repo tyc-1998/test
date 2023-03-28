@@ -10,8 +10,8 @@
 typedef enum
 {
 	Z_ORDER_LEVEL_0,//lowest graphic level
-	Z_ORDER_LEVEL_1,//middle graphic level
-	Z_ORDER_LEVEL_2,//highest graphic level
+	Z_ORDER_LEVEL_1,//middle graphic level, call activate_layer before use it, draw everything inside the active rect.
+	Z_ORDER_LEVEL_2,//highest graphic level, call activate_layer before use it, draw everything inside the active rect.
 	Z_ORDER_LEVEL_MAX
 }Z_ORDER_LEVEL;
 
@@ -257,7 +257,7 @@ public:
 			return draw_pixel_low_level(x, y, rgb);
 		}
 
-		if (m_layers[z_order].active_rect.pt_in_rect(x, y))
+		if (m_layers[z_order].rect.pt_in_rect(x, y))
 		{
 			c_rect layer_rect = m_layers[z_order].rect;
 			if (m_color_bytes == 2)
@@ -306,21 +306,21 @@ public:
 		if (z_order == m_top_zorder)
 		{
 			int width = m_layers[z_order].rect.width();
-			c_rect active_rect = m_layers[z_order].active_rect;
+			c_rect layer_rect = m_layers[z_order].rect;
 			unsigned int rgb_16 = GL_RGB_32_to_16(rgb);
 			for (int y = y0; y <= y1; y++)
 			{
 				for (int x = x0; x <= x1; x++)
 				{
-					if (active_rect.pt_in_rect(x, y))
+					if (layer_rect.pt_in_rect(x, y))
 					{
 						if (m_color_bytes == 2)
 						{
-							((unsigned short*)m_layers[z_order].fb)[(y - active_rect.m_top) * width + (x - active_rect.m_left)] = rgb_16;
+							((unsigned short*)m_layers[z_order].fb)[(y - layer_rect.m_top) * width + (x - layer_rect.m_left)] = rgb_16;
 						}
 						else
 						{
-							((unsigned int*)m_layers[z_order].fb)[(y - active_rect.m_top) * width + (x - active_rect.m_left)] = rgb;	
+							((unsigned int*)m_layers[z_order].fb)[(y - layer_rect.m_top) * width + (x - layer_rect.m_left)] = rgb;	
 						}
 					}
 				}
@@ -430,9 +430,9 @@ public:
 	void activate_layer(c_rect active_rect, unsigned int active_z_order)//empty active rect means inactivating the layer
 	{
 		ASSERT(active_z_order > Z_ORDER_LEVEL_0 && active_z_order <= Z_ORDER_LEVEL_MAX);
+		
+		//Show the layers below the current active rect.
 		c_rect current_active_rect = m_layers[active_z_order].active_rect;
-
-		//inactivate the old active rect of the layer, and show the layers below the rect.
 		for(int low_z_order = Z_ORDER_LEVEL_0; low_z_order < active_z_order; low_z_order++)
 		{
 			c_rect low_layer_rect = m_layers[low_z_order].rect;
