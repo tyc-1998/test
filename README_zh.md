@@ -60,7 +60,7 @@
 ## Demo展示墻
 - 0依赖，100%编译通过，可直接运行
 - 点击你喜欢的实例，并运行在你的硬件上面
-- 大部分demo的UI代码只有100行左右，代碼庫在[这里。](https://gitee.com/idea4good/GuiLiteSamples)
+- 大部分demo的UI代码只有100行左右，代碼庫在[GuiLiteSamples](https://gitee.com/idea4good/GuiLiteSamples)
 ---
 ### 單片機平臺
 ---
@@ -94,7 +94,7 @@
     <td align="center"><a href="https://gitee.com/idea4good/GuiLiteSamples/tree/master/HostMonitor"><img src="documents/BuildInfo.png" width="600px;"/><br /><sub><b>Code Telemetry & Analysis in real time</b></sub></a>
   </tr>
   <tr>
-    <td align="center"><a href="https://gitee.com/idea4good/GuiLiteSamples/tree/master/HelloAzureIoT"><img src="documents/HelloAzureIoT.jpg" width="600px;"/><br /><sub><b>Track IoT device over the world</b></sub></a>
+    <td align="center"><a href="https://gitee.com/idea4good/GuiLiteSamples/tree/master/HelloAzureIoT"><img src="documents/HelloAzureIoT.png" width="600px;"/><br /><sub><b>Track IoT device over the world</b></sub></a>
   </tr>
 </table>
 

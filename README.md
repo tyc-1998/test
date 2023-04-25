@@ -62,7 +62,7 @@ Even a C beginner could master GUI-lite quickly. The source code only uses basic
 ## Demo wall
 - Zero dependency, 100% build pass & runnable
 - Click the demo you like, and run it on your hardware
-- Most of the demos have about 100 lines of UI code, code repository is [here.](https://gitee.com/idea4good/GuiLiteSamples)
+- Most of the demos have about 100 lines of UI code, the code repository is [GuiLiteSamples](https://gitee.com/idea4good/GuiLiteSamples)
 ---
 ### MCU platform
 ---
@@ -96,7 +96,7 @@ Even a C beginner could master GUI-lite quickly. The source code only uses basic
     <td align="center"><a href="https://gitee.com/idea4good/GuiLiteSamples/tree/master/HostMonitor"><img src="documents/BuildInfo.png" width="600px;"/><br /><sub><b>Code Telemetry & Analysis in real time</b></sub></a>
   </tr>
   <tr>
-    <td align="center"><a href="https://gitee.com/idea4good/GuiLiteSamples/tree/master/HelloAzureIoT"><img src="documents/HelloAzureIoT.jpg" width="600px;"/><br /><sub><b>Track IoT device over the world</b></sub></a>
+    <td align="center"><a href="https://gitee.com/idea4good/GuiLiteSamples/tree/master/HelloAzureIoT"><img src="documents/HelloAzureIoT.png" width="600px;"/><br /><sub><b>Track IoT device over the world</b></sub></a>
   </tr>
 </table>
 
